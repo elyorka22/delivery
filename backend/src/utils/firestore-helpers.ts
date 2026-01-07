@@ -81,6 +81,17 @@ export function getCurrentTimestamp(): FirebaseFirestore.Timestamp {
   return FirebaseFirestore.Timestamp.now();
 }
 
+// Helper: Remove undefined properties from object (Firestore doesn't accept undefined)
+export function removeUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
+  const result: any = {};
+  for (const key in obj) {
+    if (obj[key] !== undefined) {
+      result[key] = obj[key];
+    }
+  }
+  return result;
+}
+
 // Users collection helpers
 function getUsersCollection() {
   return getDb().collection('users');
@@ -106,19 +117,28 @@ export async function getUserByEmail(email: string): Promise<FirestoreUser | nul
 export async function createUser(userData: Omit<FirestoreUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<FirestoreUser> {
   const now = getCurrentTimestamp();
   const userRef = getUsersCollection().doc();
+  
+  // Remove undefined properties before saving
+  const cleanUserData = removeUndefined(userData);
+  
   const user: Omit<FirestoreUser, 'id'> = {
-    ...userData,
+    ...cleanUserData,
     createdAt: now,
     updatedAt: now,
-  };
+  } as Omit<FirestoreUser, 'id'>;
+  
   await userRef.set(user);
   return { id: userRef.id, ...user };
 }
 
 export async function updateUser(id: string, updates: Partial<Omit<FirestoreUser, 'id' | 'createdAt'>>): Promise<FirestoreUser> {
   const userRef = getUsersCollection().doc(id);
+  
+  // Remove undefined properties before updating
+  const cleanUpdates = removeUndefined(updates);
+  
   const updateData = {
-    ...updates,
+    ...cleanUpdates,
     updatedAt: getCurrentTimestamp(),
   };
   await userRef.update(updateData);

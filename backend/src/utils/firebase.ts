@@ -174,6 +174,12 @@ function initializeFirebase() {
     }
 
     firestoreInstance = admin.firestore();
+    
+    // Configure Firestore to ignore undefined properties
+    firestoreInstance.settings({
+      ignoreUndefinedProperties: true,
+    });
+    
     console.log('✅ Firebase Admin initialized');
     return { firebaseApp: firebaseAppInstance, db: firestoreInstance };
   } catch (error: any) {
