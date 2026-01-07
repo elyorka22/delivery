@@ -17,7 +17,40 @@ function initializeFirebase() {
     
     // Try to initialize with service account from environment variable (Railway)
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      let serviceAccount: any;
+      try {
+        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      } catch (parseError: any) {
+        throw new Error(`Failed to parse FIREBASE_SERVICE_ACCOUNT JSON: ${parseError.message}`);
+      }
+      
+      // Validate required fields
+      if (!serviceAccount.private_key) {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT is missing "private_key" field');
+      }
+      if (!serviceAccount.project_id) {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT is missing "project_id" field');
+      }
+      if (!serviceAccount.client_email) {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT is missing "client_email" field');
+      }
+      
+      // Fix private key format - replace escaped newlines with actual newlines
+      // Railway might escape \n as \\n, so we need to handle both
+      if (typeof serviceAccount.private_key === 'string') {
+        serviceAccount.private_key = serviceAccount.private_key
+          .replace(/\\n/g, '\n')
+          .replace(/\\\\n/g, '\n');
+        
+        // Ensure private key starts and ends correctly
+        if (!serviceAccount.private_key.includes('BEGIN PRIVATE KEY')) {
+          throw new Error('Private key format is invalid - missing BEGIN PRIVATE KEY');
+        }
+        if (!serviceAccount.private_key.includes('END PRIVATE KEY')) {
+          throw new Error('Private key format is invalid - missing END PRIVATE KEY');
+        }
+      }
+      
       firebaseAppInstance = admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
@@ -60,7 +93,30 @@ function initializeFirebase() {
       }
       // Log what credentials are available
       if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-        console.log('ℹ️ FIREBASE_SERVICE_ACCOUNT is set (length:', process.env.FIREBASE_SERVICE_ACCOUNT.length, ')');
+        const jsonLength = process.env.FIREBASE_SERVICE_ACCOUNT.length;
+        console.log('ℹ️ FIREBASE_SERVICE_ACCOUNT is set (length:', jsonLength, ')');
+        
+        // Typical service account JSON is 2000+ characters
+        if (jsonLength < 500) {
+          console.error('❌ FIREBASE_SERVICE_ACCOUNT seems too short. Expected ~2000+ characters.');
+          console.error('💡 Make sure you copied the ENTIRE JSON from serviceAccountKey.json');
+          console.error('💡 The JSON should include: type, project_id, private_key, client_email, etc.');
+        }
+        
+        // Try to show what fields are present
+        try {
+          const parsed = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+          const fields = Object.keys(parsed);
+          console.log('ℹ️ JSON fields found:', fields.join(', '));
+          if (!fields.includes('private_key')) {
+            console.error('❌ Missing "private_key" field in JSON');
+          }
+          if (!fields.includes('project_id')) {
+            console.error('❌ Missing "project_id" field in JSON');
+          }
+        } catch (e) {
+          console.error('❌ Cannot parse FIREBASE_SERVICE_ACCOUNT as JSON');
+        }
       } else if (process.env.FIREBASE_PROJECT_ID) {
         console.log('ℹ️ FIREBASE_PROJECT_ID is set:', process.env.FIREBASE_PROJECT_ID);
       } else {
