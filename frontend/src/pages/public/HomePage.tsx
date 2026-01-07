@@ -239,14 +239,14 @@ export default function HomePage() {
                   className={`flex flex-col items-center space-y-2 min-w-[100px] transition-all ${
                     selectedRestaurant === null
                       ? 'transform scale-110'
-                      : 'opacity-70 hover:opacity-100'
+                      : 'hover:scale-105'
                   }`}
                 >
                   <div
                     className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-lg transition-all ${
                       selectedRestaurant === null
-                        ? 'bg-primary-600 text-white shadow-primary-200'
-                        : 'bg-white text-gray-700 hover:bg-gray-50'
+                        ? 'bg-primary-600 text-white shadow-primary-200 ring-4 ring-primary-600'
+                        : 'bg-primary-100 text-primary-700 hover:bg-primary-200'
                     }`}
                   >
                     🍽️
@@ -255,7 +255,7 @@ export default function HomePage() {
                     className={`text-xs font-medium text-center ${
                       selectedRestaurant === null
                         ? 'text-primary-600 font-bold'
-                        : 'text-gray-600'
+                        : 'text-primary-600 font-semibold'
                     }`}
                   >
                     Barchasi
@@ -268,14 +268,14 @@ export default function HomePage() {
                     className={`flex flex-col items-center space-y-2 min-w-[100px] transition-all ${
                       selectedRestaurant === restaurant.id
                         ? 'transform scale-110'
-                        : 'opacity-70 hover:opacity-100'
+                        : 'hover:scale-105'
                     }`}
                   >
                     <div
-                      className={`w-16 h-16 rounded-full flex items-center justify-center overflow-hidden shadow-lg transition-all bg-white ${
+                      className={`w-16 h-16 rounded-full flex items-center justify-center overflow-hidden shadow-lg transition-all ${
                         selectedRestaurant === restaurant.id
                           ? 'ring-4 ring-primary-600 shadow-primary-200'
-                          : 'hover:bg-gray-50'
+                          : 'ring-2 ring-primary-200 shadow-md'
                       }`}
                     >
                       {restaurant.image ? (
@@ -308,7 +308,7 @@ export default function HomePage() {
                       className={`text-xs font-medium text-center line-clamp-2 ${
                         selectedRestaurant === restaurant.id
                           ? 'text-primary-600 font-bold'
-                          : 'text-gray-600'
+                          : 'text-primary-600 font-semibold'
                       }`}
                     >
                       {restaurant.name}
