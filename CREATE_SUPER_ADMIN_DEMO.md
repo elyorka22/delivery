@@ -42,12 +42,13 @@ npm run create-admin
 
 ```sql
 -- Создание супер-админа с демо данными
--- Пароль: admin123 (хеш уже готов)
+-- Email: admin@demo.com
+-- Пароль: admin123
 
-INSERT INTO "User" (email, password, name, phone, role, "createdAt", "updatedAt")
+INSERT INTO users (email, password, name, phone, role, created_at, updated_at)
 VALUES (
   'admin@demo.com',
-  '$2a$10$rOzJqJqJqJqJqJqJqJqJqOqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJq',
+  '$2a$10$b/ZJ6Rt1FxTSzx8PJPJviuH4OFxejWrFd/X59wjtaRBAMhiRQBv8K',
   'Demo Super Admin',
   '+7 (999) 000-00-00',
   'SUPER_ADMIN',
@@ -57,10 +58,10 @@ VALUES (
 ON CONFLICT (email) DO UPDATE
 SET 
   role = 'SUPER_ADMIN',
-  password = '$2a$10$rOzJqJqJqJqJqJqJqJqJqOqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJqJq',
+  password = '$2a$10$b/ZJ6Rt1FxTSzx8PJPJviuH4OFxejWrFd/X59wjtaRBAMhiRQBv8K',
   name = 'Demo Super Admin',
   phone = '+7 (999) 000-00-00',
-  "updatedAt" = NOW();
+  updated_at = NOW();
 ```
 
 **Важно:** Нужно получить правильный хеш пароля. Используйте:

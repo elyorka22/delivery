@@ -7,7 +7,7 @@
 -- Хеш пароля для 'admin123':
 -- $2a$10$b/ZJ6Rt1FxTSzx8PJPJviuH4OFxejWrFd/X59wjtaRBAMhiRQBv8K
 
-INSERT INTO "User" (email, password, name, phone, role, "createdAt", "updatedAt")
+INSERT INTO users (email, password, name, phone, role, created_at, updated_at)
 VALUES (
   'admin@demo.com',
   '$2a$10$b/ZJ6Rt1FxTSzx8PJPJviuH4OFxejWrFd/X59wjtaRBAMhiRQBv8K',
@@ -23,5 +23,5 @@ SET
   password = '$2a$10$b/ZJ6Rt1FxTSzx8PJPJviuH4OFxejWrFd/X59wjtaRBAMhiRQBv8K',
   name = 'Demo Super Admin',
   phone = '+7 (999) 000-00-00',
-  "updatedAt" = NOW();
+  updated_at = NOW();
 
