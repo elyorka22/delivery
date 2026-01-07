@@ -15,6 +15,9 @@ import cookRoutes from './routes/cookRoutes';
 import courierRoutes from './routes/courierRoutes';
 import uploadRoutes from './routes/uploadRoutes';
 
+// Initialize Firebase (will log status on import)
+import './utils/firebase';
+
 dotenv.config();
 
 const app = express();
@@ -101,22 +104,47 @@ app.get('/api/diagnose', async (req, res) => {
     database_url_length: process.env.DATABASE_URL?.length || 0,
     database_url_preview: process.env.DATABASE_URL?.substring(0, 50) + '...' || 'not set',
     prisma_connection: 'testing...',
+    firebase_configured: !!process.env.FIREBASE_SERVICE_ACCOUNT || !!process.env.FIREBASE_PROJECT_ID,
+    firebase_status: 'checking...',
   };
 
   try {
     // Try to connect with Prisma
     const prisma = (await import('./utils/prisma')).default;
-    await prisma.$connect();
-    diagnostics.prisma_connection = '✅ Connected';
-    
-    // Try a simple query
-    await prisma.$queryRaw`SELECT 1 as test`;
-    diagnostics.prisma_query = '✅ Query successful';
-    
-    await prisma.$disconnect();
+    if (process.env.DATABASE_URL) {
+      await prisma.$connect();
+      diagnostics.prisma_connection = '✅ Connected';
+      
+      // Try a simple query
+      await prisma.$queryRaw`SELECT 1 as test`;
+      diagnostics.prisma_query = '✅ Query successful';
+      
+      await prisma.$disconnect();
+    } else {
+      diagnostics.prisma_connection = '⚠️ DATABASE_URL not set (migrating to Firebase)';
+    }
   } catch (error: any) {
     diagnostics.prisma_connection = `❌ Error: ${error.message}`;
     diagnostics.prisma_error_code = error.code;
+  }
+
+  // Check Firebase
+  try {
+    const { db } = await import('./utils/firebase');
+    if (db) {
+      diagnostics.firebase_status = '✅ Initialized';
+      // Try a simple read to test connection
+      const testRef = db.collection('_test').limit(1);
+      await testRef.get();
+      diagnostics.firebase_connection = '✅ Connected';
+    } else {
+      diagnostics.firebase_status = '❌ Not initialized';
+      if (!process.env.FIREBASE_SERVICE_ACCOUNT && !process.env.FIREBASE_PROJECT_ID) {
+        diagnostics.firebase_error = 'FIREBASE_SERVICE_ACCOUNT not set';
+      }
+    }
+  } catch (error: any) {
+    diagnostics.firebase_status = `❌ Error: ${error.message}`;
   }
 
   res.json(diagnostics);

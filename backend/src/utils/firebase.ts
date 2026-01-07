@@ -54,7 +54,18 @@ function initializeFirebase() {
     if (error.code === 'MODULE_NOT_FOUND' && process.env.NODE_ENV !== 'production') {
       console.warn('⚠️ Firebase Admin SDK not found. This is OK during development.');
     } else {
-      console.warn('⚠️ Firebase initialization error:', error.message);
+      console.error('❌ Firebase initialization error:', error.message);
+      if (error.stack) {
+        console.error('Stack:', error.stack);
+      }
+      // Log what credentials are available
+      if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        console.log('ℹ️ FIREBASE_SERVICE_ACCOUNT is set (length:', process.env.FIREBASE_SERVICE_ACCOUNT.length, ')');
+      } else if (process.env.FIREBASE_PROJECT_ID) {
+        console.log('ℹ️ FIREBASE_PROJECT_ID is set:', process.env.FIREBASE_PROJECT_ID);
+      } else {
+        console.warn('⚠️ No Firebase credentials found. Set FIREBASE_SERVICE_ACCOUNT in Railway.');
+      }
     }
     return { firebaseApp: null, db: null };
   }
