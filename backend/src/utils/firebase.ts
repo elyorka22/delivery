@@ -102,11 +102,28 @@ function initializeFirebase() {
       process.env.FIREBASE_CLIENT_EMAIL &&
       process.env.FIREBASE_PRIVATE_KEY
     ) {
+      // Validate private key length
+      const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
+      if (privateKey.length < 500) {
+        console.error('❌ FIREBASE_PRIVATE_KEY is too short:', privateKey.length, 'characters (expected 1600+)');
+        console.error('💡 Make sure you copied the ENTIRE private_key from the JSON file');
+        console.error('💡 It should start with "-----BEGIN PRIVATE KEY-----" and end with "-----END PRIVATE KEY-----"');
+        throw new Error(`FIREBASE_PRIVATE_KEY is too short (${privateKey.length} chars, expected 1600+). Copy the entire private_key from JSON.`);
+      }
+      
+      if (!privateKey.includes('BEGIN PRIVATE KEY')) {
+        throw new Error('FIREBASE_PRIVATE_KEY is missing "-----BEGIN PRIVATE KEY-----"');
+      }
+      if (!privateKey.includes('END PRIVATE KEY')) {
+        throw new Error('FIREBASE_PRIVATE_KEY is missing "-----END PRIVATE KEY-----"');
+      }
+      
+      console.log('ℹ️ Using individual Firebase environment variables');
       firebaseAppInstance = admin.initializeApp({
         credential: admin.credential.cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
           clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+          privateKey: privateKey,
         }),
       });
     } else {

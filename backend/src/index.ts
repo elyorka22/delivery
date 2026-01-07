@@ -139,12 +139,23 @@ app.get('/api/diagnose', async (req, res) => {
       diagnostics.firebase_connection = '✅ Connected';
     } else {
       diagnostics.firebase_status = '❌ Not initialized';
-      if (!process.env.FIREBASE_SERVICE_ACCOUNT && !process.env.FIREBASE_PROJECT_ID) {
-        diagnostics.firebase_error = 'FIREBASE_SERVICE_ACCOUNT not set';
+      // Check which method is configured
+      if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        diagnostics.firebase_method = 'JSON (FIREBASE_SERVICE_ACCOUNT)';
+        diagnostics.firebase_json_length = process.env.FIREBASE_SERVICE_ACCOUNT.length;
+      } else if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+        diagnostics.firebase_method = 'Separate variables';
+        diagnostics.firebase_private_key_length = process.env.FIREBASE_PRIVATE_KEY.length;
+        diagnostics.firebase_error = 'Check FIREBASE_PRIVATE_KEY length (should be 1600+)';
+      } else {
+        diagnostics.firebase_error = 'No Firebase credentials found. Set FIREBASE_SERVICE_ACCOUNT or FIREBASE_PROJECT_ID + FIREBASE_CLIENT_EMAIL + FIREBASE_PRIVATE_KEY';
       }
     }
   } catch (error: any) {
     diagnostics.firebase_status = `❌ Error: ${error.message}`;
+    if (process.env.FIREBASE_PRIVATE_KEY) {
+      diagnostics.firebase_private_key_length = process.env.FIREBASE_PRIVATE_KEY.length;
+    }
   }
 
   res.json(diagnostics);
