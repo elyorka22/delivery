@@ -2,8 +2,12 @@
 import { db } from './firebase';
 import * as FirebaseFirestore from 'firebase-admin/firestore';
 
-if (!db) {
-  throw new Error('Firestore is not initialized. Check Firebase credentials.');
+// Lazy check for db - don't throw on import, check on use
+function getDb() {
+  if (!db) {
+    throw new Error('Firestore is not initialized. Check Firebase credentials.');
+  }
+  return db;
 }
 
 // Type definitions
@@ -78,10 +82,12 @@ export function getCurrentTimestamp(): FirebaseFirestore.Timestamp {
 }
 
 // Users collection helpers
-export const usersCollection = db.collection('users');
+function getUsersCollection() {
+  return getDb().collection('users');
+}
 
 export async function getUserById(id: string): Promise<FirestoreUser | null> {
-  const doc = await usersCollection.doc(id).get();
+  const doc = await getUsersCollection().doc(id).get();
   if (!doc.exists) {
     return null;
   }
@@ -89,7 +95,7 @@ export async function getUserById(id: string): Promise<FirestoreUser | null> {
 }
 
 export async function getUserByEmail(email: string): Promise<FirestoreUser | null> {
-  const snapshot = await usersCollection.where('email', '==', email).limit(1).get();
+  const snapshot = await getUsersCollection().where('email', '==', email).limit(1).get();
   if (snapshot.empty) {
     return null;
   }
@@ -99,7 +105,7 @@ export async function getUserByEmail(email: string): Promise<FirestoreUser | nul
 
 export async function createUser(userData: Omit<FirestoreUser, 'id' | 'createdAt' | 'updatedAt'>): Promise<FirestoreUser> {
   const now = getCurrentTimestamp();
-  const userRef = usersCollection.doc();
+  const userRef = getUsersCollection().doc();
   const user: Omit<FirestoreUser, 'id'> = {
     ...userData,
     createdAt: now,
@@ -110,7 +116,7 @@ export async function createUser(userData: Omit<FirestoreUser, 'id' | 'createdAt
 }
 
 export async function updateUser(id: string, updates: Partial<Omit<FirestoreUser, 'id' | 'createdAt'>>): Promise<FirestoreUser> {
-  const userRef = usersCollection.doc(id);
+  const userRef = getUsersCollection().doc(id);
   const updateData = {
     ...updates,
     updatedAt: getCurrentTimestamp(),
@@ -121,10 +127,12 @@ export async function updateUser(id: string, updates: Partial<Omit<FirestoreUser
 }
 
 // Restaurants collection helpers
-export const restaurantsCollection = db.collection('restaurants');
+function getRestaurantsCollection() {
+  return getDb().collection('restaurants');
+}
 
 export async function getRestaurantById(id: string): Promise<FirestoreRestaurant | null> {
-  const doc = await restaurantsCollection.doc(id).get();
+  const doc = await getRestaurantsCollection().doc(id).get();
   if (!doc.exists) {
     return null;
   }
@@ -132,7 +140,7 @@ export async function getRestaurantById(id: string): Promise<FirestoreRestaurant
 }
 
 export async function getRestaurants(activeOnly: boolean = true): Promise<FirestoreRestaurant[]> {
-  let query: FirebaseFirestore.Query = restaurantsCollection;
+  let query: FirebaseFirestore.Query = getRestaurantsCollection();
   
   if (activeOnly) {
     query = query.where('isActive', '==', true);
@@ -144,7 +152,7 @@ export async function getRestaurants(activeOnly: boolean = true): Promise<Firest
 
 export async function createRestaurant(restaurantData: Omit<FirestoreRestaurant, 'id' | 'createdAt' | 'updatedAt'>): Promise<FirestoreRestaurant> {
   const now = getCurrentTimestamp();
-  const restaurantRef = restaurantsCollection.doc();
+  const restaurantRef = getRestaurantsCollection().doc();
   const restaurant: Omit<FirestoreRestaurant, 'id'> = {
     ...restaurantData,
     createdAt: now,
@@ -155,7 +163,7 @@ export async function createRestaurant(restaurantData: Omit<FirestoreRestaurant,
 }
 
 export async function updateRestaurant(id: string, updates: Partial<Omit<FirestoreRestaurant, 'id' | 'createdAt'>>): Promise<FirestoreRestaurant> {
-  const restaurantRef = restaurantsCollection.doc(id);
+  const restaurantRef = getRestaurantsCollection().doc(id);
   const updateData = {
     ...updates,
     updatedAt: getCurrentTimestamp(),
@@ -166,21 +174,23 @@ export async function updateRestaurant(id: string, updates: Partial<Omit<Firesto
 }
 
 export async function deleteRestaurant(id: string): Promise<void> {
-  await restaurantsCollection.doc(id).delete();
+  await getRestaurantsCollection().doc(id).delete();
 }
 
 // MenuItems collection helpers
-export const menuItemsCollection = db.collection('menuItems');
+function getMenuItemsCollection() {
+  return getDb().collection('menuItems');
+}
 
 export async function getMenuItemsByRestaurant(restaurantId: string): Promise<FirestoreMenuItem[]> {
-  const snapshot = await menuItemsCollection
+  const snapshot = await getMenuItemsCollection()
     .where('restaurantId', '==', restaurantId)
     .get();
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreMenuItem));
 }
 
 export async function getMenuItemById(id: string): Promise<FirestoreMenuItem | null> {
-  const doc = await menuItemsCollection.doc(id).get();
+  const doc = await getMenuItemsCollection().doc(id).get();
   if (!doc.exists) {
     return null;
   }
@@ -188,10 +198,12 @@ export async function getMenuItemById(id: string): Promise<FirestoreMenuItem | n
 }
 
 // Orders collection helpers
-export const ordersCollection = db.collection('orders');
+function getOrdersCollection() {
+  return getDb().collection('orders');
+}
 
 export async function getOrderById(id: string): Promise<FirestoreOrder | null> {
-  const doc = await ordersCollection.doc(id).get();
+  const doc = await getOrdersCollection().doc(id).get();
   if (!doc.exists) {
     return null;
   }
@@ -200,7 +212,7 @@ export async function getOrderById(id: string): Promise<FirestoreOrder | null> {
 
 export async function createOrder(orderData: Omit<FirestoreOrder, 'id' | 'createdAt' | 'updatedAt'>): Promise<FirestoreOrder> {
   const now = getCurrentTimestamp();
-  const orderRef = ordersCollection.doc();
+  const orderRef = getOrdersCollection().doc();
   const order: Omit<FirestoreOrder, 'id'> = {
     ...orderData,
     createdAt: now,
@@ -211,7 +223,7 @@ export async function createOrder(orderData: Omit<FirestoreOrder, 'id' | 'create
 }
 
 export async function updateOrder(id: string, updates: Partial<Omit<FirestoreOrder, 'id' | 'createdAt'>>): Promise<FirestoreOrder> {
-  const orderRef = ordersCollection.doc(id);
+  const orderRef = getOrdersCollection().doc(id);
   const updateData = {
     ...updates,
     updatedAt: getCurrentTimestamp(),
