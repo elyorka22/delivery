@@ -3,6 +3,7 @@ import Layout from '../../components/Layout';
 import AdminNav from '../../components/AdminNav';
 import AdminHome from './AdminHome';
 import AdminRestaurants from './AdminRestaurants';
+import AdminCarousel from './AdminCarousel';
 import AdminUsers from './AdminUsers';
 import AdminOrders from './AdminOrders';
 import AdminProfile from './AdminProfile';
@@ -15,6 +16,7 @@ export default function AdminDashboard() {
         <Routes>
           <Route index element={<AdminHome />} />
           <Route path="restaurants" element={<AdminRestaurants />} />
+          <Route path="carousel" element={<AdminCarousel />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="profile" element={<AdminProfile />} />

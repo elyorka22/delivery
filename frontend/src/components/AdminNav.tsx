@@ -6,6 +6,7 @@ export default function AdminNav() {
   const navItems = [
     { path: '/admin', label: 'Bosh sahifa' },
     { path: '/admin/restaurants', label: 'Restoranlar' },
+    { path: '/admin/carousel', label: 'Karusel' },
     { path: '/admin/users', label: 'Foydalanuvchilar' },
     { path: '/admin/orders', label: 'Buyurtmalar' },
     { path: '/admin/profile', label: 'Profil' },
