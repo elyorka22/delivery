@@ -93,6 +93,35 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Server is running' });
 });
 
+// Diagnostic endpoint to test database connection
+app.get('/api/diagnose', async (req, res) => {
+  const diagnostics: any = {
+    server: 'running',
+    database_url_set: !!process.env.DATABASE_URL,
+    database_url_length: process.env.DATABASE_URL?.length || 0,
+    database_url_preview: process.env.DATABASE_URL?.substring(0, 50) + '...' || 'not set',
+    prisma_connection: 'testing...',
+  };
+
+  try {
+    // Try to connect with Prisma
+    const prisma = (await import('./utils/prisma')).default;
+    await prisma.$connect();
+    diagnostics.prisma_connection = '✅ Connected';
+    
+    // Try a simple query
+    await prisma.$queryRaw`SELECT 1 as test`;
+    diagnostics.prisma_query = '✅ Query successful';
+    
+    await prisma.$disconnect();
+  } catch (error: any) {
+    diagnostics.prisma_connection = `❌ Error: ${error.message}`;
+    diagnostics.prisma_error_code = error.code;
+  }
+
+  res.json(diagnostics);
+});
+
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
