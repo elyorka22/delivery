@@ -36,7 +36,7 @@ Railway автоматически устанавливает `PORT`, нужно
 
 1. Нажмите "New Project"
 2. Выберите "Deploy from GitHub repo"
-3. Выберите ваш репозиторий `fooddelivery`
+3. Выберите ваш репозиторий `elyorka22/delivery`
 
 ### Шаг 3: Настроить сервис
 

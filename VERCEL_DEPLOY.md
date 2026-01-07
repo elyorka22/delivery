@@ -23,7 +23,7 @@ git push origin main
 ### Шаг 2: Создать проект
 
 1. Нажмите "Add New..." → "Project"
-2. Выберите ваш репозиторий `fooddelivery`
+2. Выберите ваш репозиторий `elyorka22/delivery`
 3. Нажмите "Import"
 
 ### Шаг 3: Настроить проект

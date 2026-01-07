@@ -113,3 +113,4 @@ postgresql://postgres:2fjzhO8DlWGTzpIY@db.gykgvdssaaloinxkqwtz.supabase.co:5432/
 
 После правильной настройки `DATABASE_URL` все должно работать.
 
+

@@ -106,3 +106,4 @@ postgresql://postgres:2fjzhO8DlWGTzpIY@db.gykgvdssaaloinxkqwtz.supabase.co:5432/
 
 Используйте прямой Connection String с параметрами SSL - это должно решить проблему.
 
+

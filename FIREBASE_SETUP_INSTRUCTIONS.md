@@ -83,3 +83,4 @@ FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY----
 
 После выполнения этих шагов сообщите мне, и я продолжу настройку Firebase в коде.
 
+

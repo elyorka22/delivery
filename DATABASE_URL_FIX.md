@@ -85,3 +85,4 @@ postgresql://postgres.gykgvdssaaloinxkqwtz:2fjzhO8DlWGTzpIY@aws-0-us-west-1.pool
 
 После правильной настройки `DATABASE_URL` подключение должно работать.
 
+

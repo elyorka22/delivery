@@ -85,3 +85,4 @@ postgresql://postgres:2fjzhO8DlWGTzpIY@db.gykgvdssaaloinxkqwtz.supabase.co:5432/
 
 Попробуйте сначала **Connection Pooling URL** - это часто решает проблемы с Railway.
 
+

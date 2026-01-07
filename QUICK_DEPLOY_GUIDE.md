@@ -128,3 +128,5 @@ VITE_API_URL=https://yourproject.up.railway.app/api
 - `VERCEL_DEPLOY.md` - пошаговый деплой frontend
 - `DEPLOYMENT_RECOMMENDATIONS.md` - полное сравнение всех вариантов
 
+
+

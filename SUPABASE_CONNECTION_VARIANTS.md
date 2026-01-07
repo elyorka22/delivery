@@ -91,3 +91,4 @@ postgresql://postgres:2fjzhO8DlWGTzpIY@db.gykgvdssaaloinxkqwtz.supabase.co:5432/
 
 Начните с **Варианта 1** (самый простой) и идите по порядку. Один из них должен сработать!
 
+

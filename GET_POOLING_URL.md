@@ -109,3 +109,4 @@ postgresql://postgres.gykgvdssaaloinxkqwtz:2fjzhO8DlWGTzpIY@aws-0-us-east-1.pool
 
 Connection Pooling URL должен решить проблему, так как использует другой порт и домен, который Railway может достичь.
 
+

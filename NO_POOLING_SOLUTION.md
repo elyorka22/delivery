@@ -100,3 +100,4 @@ postgresql://postgres:2fjzhO8DlWGTzpIY@db.gykgvdssaaloinxkqwtz.supabase.co:5432/
 
 Начните с создания PostgreSQL в Railway - это самое простое и надежное решение.
 
+

@@ -250,3 +250,5 @@ git remote add origin https://github.com/ваш-username/fooddelivery.git
 1. ✅ Деплой Backend на Railway (см. `RAILWAY_DEPLOY.md`)
 2. ✅ Деплой Frontend на Vercel (см. `VERCEL_DEPLOY.md`)
 
+
+

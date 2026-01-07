@@ -108,3 +108,4 @@ postgresql://postgres.gykgvdssaaloinxkqwtz:2fjzhO8DlWGTzpIY@aws-0-us-east-1.pool
 
 **Главное:** Используйте Connection Pooling URL с портом **6543** - это должно решить проблему!
 
+

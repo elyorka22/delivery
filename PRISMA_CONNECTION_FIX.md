@@ -112,3 +112,4 @@ postgresql://postgres:2fjzhO8DlWGTzpIY@db.gykgvdssaaloinxkqwtz.supabase.co:5432/
 
 Попробуйте сначала проверить статус Supabase проекта и сбросить пароль базы данных.
 
+

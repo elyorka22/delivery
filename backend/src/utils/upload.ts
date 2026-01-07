@@ -43,3 +43,5 @@ export const upload = multer({
 // Middleware для загрузки одного файла
 export const uploadSingle = upload.single('image');
 
+
+

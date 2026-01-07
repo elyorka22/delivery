@@ -84,3 +84,4 @@ postgresql://postgres:2fjzhO8DlWGTzpIY@db.gykgvdssaaloinxkqwtz.supabase.co:5432/
 
 Начните с Варианта 1 (US West) - это самый распространенный регион для Supabase.
 
+

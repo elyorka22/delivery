@@ -127,3 +127,4 @@ postgresql://postgres:2fjzhO8DlWGTzpIY@db.gykgvdssaaloinxkqwtz.supabase.co:5432/
 
 Проблема точно в сетевых ограничениях. Проверьте настройки Supabase и попробуйте варианты выше.
 
+

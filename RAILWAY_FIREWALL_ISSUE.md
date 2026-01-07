@@ -107,3 +107,4 @@ postgresql://postgres:2fjzhO8DlWGTzpIY@db.gykgvdssaaloinxkqwtz.supabase.co:5432/
 
 Network Restrictions не проблема. Скорее всего Railway блокирует исходящие подключения к Supabase. Используйте Railway PostgreSQL - это самое надежное решение.
 
+

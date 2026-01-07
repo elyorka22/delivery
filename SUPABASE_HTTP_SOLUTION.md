@@ -145,3 +145,4 @@ postgresql://postgres:2fjzhO8DlWGTzpIY@db.gykgvdssaaloinxkqwtz.supabase.co:5432/
 
 Если хотите остаться на Supabase, используйте **Вариант 1 (Supabase JS Client)**. Это потребует переписать контроллеры, но будет работать через HTTP API.
 
+
