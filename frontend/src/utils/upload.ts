@@ -1,9 +1,12 @@
 // Get API base URL from environment variable or use current origin
 const getApiBaseUrl = (): string => {
   if (typeof window === 'undefined') return '';
-  // @ts-ignore - Vite env variables
-  const envUrl = import.meta.env?.VITE_API_URL;
-  return envUrl || window.location.origin;
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  // In development, use relative path (Vite proxy will handle it)
+  return '';
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -13,7 +16,8 @@ export const uploadImage = async (file: File): Promise<string> => {
   formData.append('image', file);
   
   const token = localStorage.getItem('token');
-  const response = await fetch('/api/upload', {
+  const apiUrl = API_BASE_URL || '/api';
+  const response = await fetch(`${apiUrl}/upload`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
