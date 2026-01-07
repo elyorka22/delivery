@@ -104,14 +104,27 @@ function initializeFirebase() {
     ) {
       // Validate and fix private key
       let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+      const originalLength = privateKey.length;
       
-      // Replace escaped newlines - handle both \\n and \n
+      // Try multiple methods to fix newlines
+      // Method 1: Replace escaped newlines
       privateKey = privateKey.replace(/\\n/g, '\n');
       privateKey = privateKey.replace(/\\\\n/g, '\n');
+      privateKey = privateKey.replace(/\\\\\\n/g, '\n');
       
-      // Remove any extra escaping
-      if (privateKey.includes('\\n')) {
-        privateKey = privateKey.replace(/\\n/g, '\n');
+      // Method 2: If still contains literal \n, try replacing
+      if (privateKey.includes('\\n') && !privateKey.includes('\n')) {
+        privateKey = privateKey.split('\\n').join('\n');
+      }
+      
+      // Method 3: If Railway escaped it differently, try this
+      if (privateKey.includes('\\r\\n')) {
+        privateKey = privateKey.replace(/\\r\\n/g, '\n');
+      }
+      
+      // Log transformation
+      if (originalLength !== privateKey.length) {
+        console.log('ℹ️ Private key transformed: original length', originalLength, '-> new length', privateKey.length);
       }
       
       if (privateKey.length < 500) {
@@ -128,22 +141,33 @@ function initializeFirebase() {
         throw new Error('FIREBASE_PRIVATE_KEY is missing "-----END PRIVATE KEY-----"');
       }
       
-      // Ensure proper format - should have actual newlines, not \n strings
-      if (!privateKey.includes('\n')) {
-        console.warn('⚠️ Private key does not contain newlines. This might cause issues.');
-      }
-      
+      const newlineCount = (privateKey.match(/\n/g) || []).length;
       console.log('ℹ️ Using individual Firebase environment variables');
       console.log('ℹ️ Private key length:', privateKey.length, 'characters');
-      console.log('ℹ️ Private key has', (privateKey.match(/\n/g) || []).length, 'newlines');
+      console.log('ℹ️ Private key has', newlineCount, 'newlines');
       
-      firebaseAppInstance = admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: privateKey,
-        }),
-      });
+      // Validate key format - should have proper PEM structure
+      if (newlineCount < 20) {
+        console.warn('⚠️ Private key has very few newlines (', newlineCount, '). Expected 30+. This might cause DECODER errors.');
+        console.warn('💡 Try copying the private key with actual line breaks, not \\n literals');
+      }
+      
+      // Try to initialize with the fixed key
+      try {
+        firebaseAppInstance = admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: privateKey,
+          }),
+        });
+      } catch (certError: any) {
+        console.error('❌ Failed to create certificate from private key');
+        console.error('💡 Error:', certError.message);
+        console.error('💡 This usually means the private key format is incorrect');
+        console.error('💡 Try using FIREBASE_SERVICE_ACCOUNT (JSON format) instead of separate variables');
+        throw certError;
+      }
     } else {
       console.warn('⚠️ Firebase credentials not found. Firebase features will be disabled.');
       return { firebaseApp: null, db: null };
