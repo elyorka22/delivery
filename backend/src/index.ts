@@ -31,10 +31,46 @@ setIO(io);
 const PORT = process.env.PORT || 5000;
 
 // CORS configuration
+// Support multiple frontend URLs (production, preview, etc.)
+const getAllowedOrigins = (): string[] => {
+  const origins: string[] = ['http://localhost:3000']; // Development
+  
+  // Add production URL if set
+  if (process.env.FRONTEND_URL) {
+    origins.push(process.env.FRONTEND_URL);
+  }
+  
+  // Add common Vercel patterns
+  if (process.env.FRONTEND_URL) {
+    const baseUrl = process.env.FRONTEND_URL.replace(/^https?:\/\//, '').split('/')[0];
+    origins.push(`https://${baseUrl}`);
+    origins.push(`https://*.vercel.app`);
+  }
+  
+  return origins;
+};
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    
+    const allowedOrigins = getAllowedOrigins();
+    const isAllowed = allowedOrigins.some(allowed => {
+      // Exact match
+      if (origin === allowed) return true;
+      // Wildcard match for vercel.app
+      if (allowed.includes('*.vercel.app') && origin.includes('.vercel.app')) return true;
+      return false;
+    });
+    
+    callback(null, isAllowed);
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
 
