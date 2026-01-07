@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "create-test-users": "tsx src/scripts/createTestUsers.ts"
+    "create-test-users": "tsx src/scripts/createTestUsers.ts",
+    "create-admin": "tsx src/scripts/createSuperAdmin.ts"
   },
   "dependencies": {
     "express": "^4.18.2",

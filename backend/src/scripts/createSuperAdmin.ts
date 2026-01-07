@@ -1,0 +1,92 @@
+import prisma from '../utils/prisma';
+import { hashPassword } from '../utils/password';
+
+/**
+ * Скрипт для создания супер-админа
+ * 
+ * Использование:
+ * 1. Локально: npx ts-node src/scripts/createSuperAdmin.ts
+ * 2. Или через npm: npm run create-admin
+ * 
+ * Можно передать параметры через переменные окружения:
+ * - ADMIN_EMAIL (по умолчанию: admin@example.com)
+ * - ADMIN_PASSWORD (по умолчанию: admin123)
+ * - ADMIN_NAME (по умолчанию: Супер Админ)
+ * - ADMIN_PHONE (по умолчанию: +7 (999) 000-00-00)
+ */
+
+async function createSuperAdmin() {
+  try {
+    const email = process.env.ADMIN_EMAIL || 'admin@example.com';
+    const password = process.env.ADMIN_PASSWORD || 'admin123';
+    const name = process.env.ADMIN_NAME || 'Супер Админ';
+    const phone = process.env.ADMIN_PHONE || '+7 (999) 000-00-00';
+
+    console.log('🔐 Создание супер-админа...');
+    console.log(`📧 Email: ${email}`);
+    console.log(`👤 Имя: ${name}`);
+    console.log(`📱 Телефон: ${phone}`);
+
+    // Проверяем, существует ли уже пользователь с таким email
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      if (existingUser.role === 'SUPER_ADMIN') {
+        console.log('⚠️  Супер-админ с таким email уже существует!');
+        console.log(`   Email: ${existingUser.email}`);
+        console.log(`   Имя: ${existingUser.name}`);
+        console.log(`   Роль: ${existingUser.role}`);
+        return;
+      } else {
+        // Обновляем роль существующего пользователя
+        const updatedUser = await prisma.user.update({
+          where: { email },
+          data: {
+            role: 'SUPER_ADMIN',
+            password: await hashPassword(password),
+            name,
+            phone,
+          },
+        });
+        console.log('✅ Существующий пользователь обновлен до супер-админа!');
+        console.log(`   Email: ${updatedUser.email}`);
+        console.log(`   Пароль: ${password}`);
+        return;
+      }
+    }
+
+    // Создаем нового супер-админа
+    const superAdmin = await prisma.user.create({
+      data: {
+        email,
+        password: await hashPassword(password),
+        name,
+        phone,
+        role: 'SUPER_ADMIN',
+      },
+    });
+
+    console.log('\n✅ Супер-админ успешно создан!');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log(`📧 Email:    ${superAdmin.email}`);
+    console.log(`🔑 Пароль:   ${password}`);
+    console.log(`👤 Имя:      ${superAdmin.name}`);
+    console.log(`📱 Телефон:  ${superAdmin.phone}`);
+    console.log(`🎭 Роль:     ${superAdmin.role}`);
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('\n💡 Теперь вы можете войти в админ-панель:');
+    console.log(`   URL: /admin`);
+    console.log(`   Email: ${email}`);
+    console.log(`   Пароль: ${password}`);
+  } catch (error) {
+    console.error('❌ Ошибка при создании супер-админа:', error);
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+createSuperAdmin();
+
