@@ -35,12 +35,40 @@ function initializeFirebase() {
         throw new Error('FIREBASE_SERVICE_ACCOUNT is missing "client_email" field');
       }
       
+      // Diagnose private key
+      const privateKeyLength = typeof serviceAccount.private_key === 'string' 
+        ? serviceAccount.private_key.length 
+        : 0;
+      
+      // Typical private key is 1600+ characters
+      if (privateKeyLength < 500) {
+        console.error('❌ Private key is too short:', privateKeyLength, 'characters (expected 1600+)');
+        console.error('💡 The private_key field seems incomplete or truncated');
+        if (typeof serviceAccount.private_key === 'string') {
+          const preview = serviceAccount.private_key.substring(0, 100);
+          console.error('💡 Private key preview:', preview);
+          if (!serviceAccount.private_key.includes('BEGIN PRIVATE KEY')) {
+            console.error('❌ Private key does not start with "-----BEGIN PRIVATE KEY-----"');
+          }
+          if (!serviceAccount.private_key.includes('END PRIVATE KEY')) {
+            console.error('❌ Private key does not end with "-----END PRIVATE KEY-----"');
+          }
+        }
+        throw new Error(`Private key is too short (${privateKeyLength} chars, expected 1600+). Make sure you copied the ENTIRE private_key from the JSON file.`);
+      }
+      
       // Fix private key format - replace escaped newlines with actual newlines
       // Railway might escape \n as \\n, so we need to handle both
       if (typeof serviceAccount.private_key === 'string') {
+        const originalKey = serviceAccount.private_key;
         serviceAccount.private_key = serviceAccount.private_key
           .replace(/\\n/g, '\n')
           .replace(/\\\\n/g, '\n');
+        
+        // Log if we made changes
+        if (originalKey !== serviceAccount.private_key) {
+          console.log('ℹ️ Fixed newline characters in private_key');
+        }
         
         // Ensure private key starts and ends correctly
         if (!serviceAccount.private_key.includes('BEGIN PRIVATE KEY')) {
@@ -48,6 +76,13 @@ function initializeFirebase() {
         }
         if (!serviceAccount.private_key.includes('END PRIVATE KEY')) {
           throw new Error('Private key format is invalid - missing END PRIVATE KEY');
+        }
+        
+        // Count newlines in the key (should be many)
+        const newlineCount = (serviceAccount.private_key.match(/\n/g) || []).length;
+        if (newlineCount < 20) {
+          console.warn('⚠️ Private key has very few newlines (', newlineCount, '). Expected 30+');
+          console.warn('💡 This might indicate the key was not copied correctly');
         }
       }
       
