@@ -2,12 +2,15 @@ import { PrismaClient } from '@prisma/client';
 
 // Prisma is still required until all controllers are migrated to Firebase
 // After migration, this file can be removed
+// Use a dummy URL if DATABASE_URL is not set to prevent initialization errors
+const databaseUrl = process.env.DATABASE_URL || 'postgresql://user:password@localhost:5432/dummy';
+
 const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   errorFormat: 'pretty',
   datasources: {
     db: {
-      url: process.env.DATABASE_URL,
+      url: databaseUrl,
     },
   },
 });
@@ -20,6 +23,14 @@ const MAX_RETRIES = 3;
 
 async function testConnection() {
   if (connectionTested) return;
+  
+  // Skip connection test if DATABASE_URL is not set (migrating to Firebase)
+  if (!process.env.DATABASE_URL) {
+    console.warn('⚠️ DATABASE_URL not set. Prisma will not connect.');
+    console.warn('💡 Migrating to Firebase. Prisma is kept for backward compatibility.');
+    connectionTested = true;
+    return;
+  }
   
   try {
     await prisma.$connect();
