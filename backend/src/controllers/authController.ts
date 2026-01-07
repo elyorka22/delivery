@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import prisma from '../utils/prisma';
 import { hashPassword, comparePassword } from '../utils/password';
 import { generateToken } from '../utils/jwt';
 import { UserRole } from '../types';
+import { getUserByEmail, createUser, getUserById, firestoreDocToObject } from '../utils/firestore-helpers';
 
 export async function register(req: Request, res: Response): Promise<void> {
   try {
@@ -13,9 +13,7 @@ export async function register(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const existingUser = await getUserByEmail(email);
 
     if (existingUser) {
       res.status(400).json({ error: 'User already exists' });
@@ -26,23 +24,13 @@ export async function register(req: Request, res: Response): Promise<void> {
     // При регистрации всегда создается только CUSTOMER
     const userRole = 'CUSTOMER';
 
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        name,
-        phone,
-        role: userRole,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        role: true,
-        avatar: true,
-        createdAt: true,
-      },
+    const user = await createUser({
+      email,
+      password: hashedPassword,
+      name,
+      phone: phone || undefined,
+      role: userRole,
+      avatar: undefined,
     });
 
     const token = generateToken({
@@ -51,8 +39,18 @@ export async function register(req: Request, res: Response): Promise<void> {
       role: user.role as UserRole,
     });
 
+    // Convert Firestore document to API response format
+    const userResponse = firestoreDocToObject(user);
     res.status(201).json({
-      user,
+      user: {
+        id: userResponse.id,
+        email: userResponse.email,
+        name: userResponse.name,
+        phone: userResponse.phone,
+        role: userResponse.role,
+        avatar: userResponse.avatar,
+        createdAt: userResponse.createdAt,
+      },
       token,
     });
   } catch (error) {
@@ -70,9 +68,7 @@ export async function login(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
+    const user = await getUserByEmail(email);
 
     if (!user) {
       res.status(401).json({ error: 'Invalid credentials' });
@@ -92,14 +88,16 @@ export async function login(req: Request, res: Response): Promise<void> {
       role: user.role as UserRole,
     });
 
+    // Convert Firestore document to API response format
+    const userResponse = firestoreDocToObject(user);
     res.json({
       user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        phone: user.phone,
-        role: user.role,
-        avatar: user.avatar,
+        id: userResponse.id,
+        email: userResponse.email,
+        name: userResponse.name,
+        phone: userResponse.phone,
+        role: userResponse.role,
+        avatar: userResponse.avatar,
       },
       token,
     });
@@ -127,25 +125,26 @@ export async function getMe(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        role: true,
-        avatar: true,
-        createdAt: true,
-      },
-    });
+    const user = await getUserById(userId);
 
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
 
-    res.json({ user });
+    // Convert Firestore document to API response format
+    const userResponse = firestoreDocToObject(user);
+    res.json({
+      user: {
+        id: userResponse.id,
+        email: userResponse.email,
+        name: userResponse.name,
+        phone: userResponse.phone,
+        role: userResponse.role,
+        avatar: userResponse.avatar,
+        createdAt: userResponse.createdAt,
+      },
+    });
   } catch (error) {
     console.error('Get me error:', error);
     res.status(500).json({ error: 'Internal server error' });
