@@ -17,9 +17,17 @@ export async function getRestaurants(req: Request, res: Response): Promise<void>
     });
 
     res.json(restaurants);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Get restaurants error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error details:', {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
+    });
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    });
   }
 }
 
@@ -71,4 +79,5 @@ export async function getMenuItems(req: Request, res: Response): Promise<void> {
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
 
