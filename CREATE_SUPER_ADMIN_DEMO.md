@@ -45,8 +45,9 @@ npm run create-admin
 -- Email: admin@demo.com
 -- Пароль: admin123
 
-INSERT INTO users (email, password, name, phone, role, created_at, updated_at)
+INSERT INTO users (id, email, password, name, phone, role, created_at, updated_at)
 VALUES (
+  'clx' || substr(md5(random()::text || clock_timestamp()::text), 1, 24),
   'admin@demo.com',
   '$2a$10$b/ZJ6Rt1FxTSzx8PJPJviuH4OFxejWrFd/X59wjtaRBAMhiRQBv8K',
   'Demo Super Admin',

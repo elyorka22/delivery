@@ -7,8 +7,10 @@
 -- Хеш пароля для 'admin123':
 -- $2a$10$b/ZJ6Rt1FxTSzx8PJPJviuH4OFxejWrFd/X59wjtaRBAMhiRQBv8K
 
-INSERT INTO users (email, password, name, phone, role, created_at, updated_at)
+-- Генерируем уникальный ID (cuid-подобный формат)
+INSERT INTO users (id, email, password, name, phone, role, created_at, updated_at)
 VALUES (
+  'clx' || substr(md5(random()::text || clock_timestamp()::text), 1, 24),
   'admin@demo.com',
   '$2a$10$b/ZJ6Rt1FxTSzx8PJPJviuH4OFxejWrFd/X59wjtaRBAMhiRQBv8K',
   'Demo Super Admin',
