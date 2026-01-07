@@ -5,6 +5,7 @@ import AdminHome from './AdminHome';
 import AdminRestaurants from './AdminRestaurants';
 import AdminUsers from './AdminUsers';
 import AdminOrders from './AdminOrders';
+import AdminProfile from './AdminProfile';
 
 export default function AdminDashboard() {
   return (
@@ -16,6 +17,7 @@ export default function AdminDashboard() {
           <Route path="restaurants" element={<AdminRestaurants />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="orders" element={<AdminOrders />} />
+          <Route path="profile" element={<AdminProfile />} />
         </Routes>
       </div>
     </Layout>

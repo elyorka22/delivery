@@ -5,6 +5,8 @@ import { authenticate } from '../middleware/auth';
 const router = Router();
 
 router.put('/me', authenticate, updateProfile);
+router.put('/profile', authenticate, updateProfile);
 
 export default router;
+
 

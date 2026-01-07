@@ -8,6 +8,7 @@ export default function AdminNav() {
     { path: '/admin/restaurants', label: 'Restoranlar' },
     { path: '/admin/users', label: 'Foydalanuvchilar' },
     { path: '/admin/orders', label: 'Buyurtmalar' },
+    { path: '/admin/profile', label: 'Profil' },
   ];
 
   return (
