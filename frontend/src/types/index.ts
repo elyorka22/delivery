@@ -51,6 +51,10 @@ export interface MenuItem {
   isAvailable: boolean;
   createdAt: string;
   updatedAt: string;
+  restaurant?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface OrderItem {

@@ -2,22 +2,21 @@ import { useEffect, useState } from 'react';
 import api from '../../services/api';
 import { getImageUrl, uploadImage } from '../../utils/upload';
 
-interface CarouselImage {
+interface CarouselCategory {
   id: string;
-  restaurantId: string;
-  restaurantName: string;
+  category: string;
   imageUrl: string;
   order: number;
 }
 
 export default function AdminCarousel() {
-  const [carouselImages, setCarouselImages] = useState<CarouselImage[]>([]);
-  const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [carouselCategories, setCarouselCategories] = useState<CarouselCategory[]>([]);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingImage, setEditingImage] = useState<CarouselImage | null>(null);
+  const [editingCategory, setEditingCategory] = useState<CarouselCategory | null>(null);
   const [formData, setFormData] = useState({
-    restaurantId: '',
+    category: '',
     imageUrl: '',
     order: 0,
   });
@@ -28,49 +27,38 @@ export default function AdminCarousel() {
   const [imagePreview, setImagePreview] = useState<string>('');
 
   useEffect(() => {
-    fetchCarouselImages();
-    fetchRestaurants();
+    fetchCarouselCategories();
+    fetchAvailableCategories();
   }, []);
 
-  const fetchCarouselImages = async () => {
+  const fetchCarouselCategories = async () => {
     try {
-      const response = await api.get('/admin/restaurants');
-      const restaurantsData = response.data;
-      
-      // Преобразуем рестораны в формат картинок карусели
-      const images: CarouselImage[] = restaurantsData
-        .filter((r: any) => r.image && r.isActive)
-        .map((r: any, index: number) => ({
-          id: r.id,
-          restaurantId: r.id,
-          restaurantName: r.name,
-          imageUrl: r.image,
-          order: index,
-        }));
-      
-      setCarouselImages(images);
+      const response = await api.get('/admin/carousel/categories');
+      const data = Array.isArray(response.data) ? response.data : [];
+      setCarouselCategories(data);
     } catch (error) {
-      console.error('Error fetching carousel images:', error);
+      console.error('Error fetching carousel categories:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchRestaurants = async () => {
+  const fetchAvailableCategories = async () => {
     try {
-      const response = await api.get('/admin/restaurants');
-      setRestaurants(response.data);
+      const response = await api.get('/admin/carousel/available-categories');
+      const data = Array.isArray(response.data) ? response.data : [];
+      setAvailableCategories(data);
     } catch (error) {
-      console.error('Error fetching restaurants:', error);
+      console.error('Error fetching available categories:', error);
     }
   };
 
   const handleCreate = () => {
-    setEditingImage(null);
+    setEditingCategory(null);
     setFormData({
-      restaurantId: '',
+      category: '',
       imageUrl: '',
-      order: carouselImages.length,
+      order: carouselCategories.length,
     });
     setImageFile(null);
     setImagePreview('');
@@ -79,14 +67,14 @@ export default function AdminCarousel() {
     setSuccess('');
   };
 
-  const handleEdit = (image: CarouselImage) => {
-    setEditingImage(image);
+  const handleEdit = (category: CarouselCategory) => {
+    setEditingCategory(category);
     setFormData({
-      restaurantId: image.restaurantId,
-      imageUrl: image.imageUrl,
-      order: image.order,
+      category: category.category,
+      imageUrl: category.imageUrl,
+      order: category.order,
     });
-    setImagePreview(getImageUrl(image.imageUrl));
+    setImagePreview(getImageUrl(category.imageUrl));
     setImageFile(null);
     setShowForm(true);
     setError('');
@@ -125,22 +113,29 @@ export default function AdminCarousel() {
         return;
       }
 
-      // Обновляем картинку ресторана
-      const restaurant = restaurants.find((r) => r.id === formData.restaurantId);
-      if (!restaurant) {
-        setError('Restoran topilmadi');
+      if (!formData.category) {
+        setError('Kategoriyani tanlang');
         setUploading(false);
         return;
       }
 
-      await api.put(`/admin/restaurants/${formData.restaurantId}`, {
-        ...restaurant,
-        image: imageUrl,
-      });
+      if (editingCategory) {
+        await api.put(`/admin/carousel/categories/${editingCategory.id}`, {
+          category: formData.category,
+          imageUrl: imageUrl,
+          order: formData.order,
+        });
+        setSuccess('Karusel kategoriyasi muvaffaqiyatli yangilandi');
+      } else {
+        await api.post('/admin/carousel/categories', {
+          category: formData.category,
+          imageUrl: imageUrl,
+          order: formData.order,
+        });
+        setSuccess('Karusel kategoriyasi muvaffaqiyatli qo\'shildi');
+      }
 
-      setSuccess('Karusel rasmi muvaffaqiyatli yangilandi');
-      fetchCarouselImages();
-      fetchRestaurants();
+      fetchCarouselCategories();
       setShowForm(false);
       setImageFile(null);
       setImagePreview('');
@@ -152,23 +147,16 @@ export default function AdminCarousel() {
     }
   };
 
-  const handleDelete = async (restaurantId: string) => {
-    if (!confirm('Bu karusel rasmini o\'chirishni xohlaysizmi?')) {
+  const handleDelete = async (id: string) => {
+    if (!confirm('Bu karusel kategoriyasini o\'chirishni xohlaysizmi?')) {
       return;
     }
 
     try {
-      const restaurant = restaurants.find((r) => r.id === restaurantId);
-      if (restaurant) {
-        await api.put(`/admin/restaurants/${restaurantId}`, {
-          ...restaurant,
-          image: '',
-        });
-        setSuccess('Karusel rasmi muvaffaqiyatli o\'chirildi');
-        fetchCarouselImages();
-        fetchRestaurants();
-        setTimeout(() => setSuccess(''), 3000);
-      }
+      await api.delete(`/admin/carousel/categories/${id}`);
+      setSuccess('Karusel kategoriyasi muvaffaqiyatli o\'chirildi');
+      fetchCarouselCategories();
+      setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err.response?.data?.error || 'O\'chirishda xatolik');
     }
@@ -177,12 +165,12 @@ export default function AdminCarousel() {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Karusel rasmlarini boshqarish</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Karusel kategoriyalarini boshqarish</h1>
         <button
           onClick={handleCreate}
           className="bg-primary-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-700 transition-colors"
         >
-          + Rasm qo'shish
+          + Kategoriya qo'shish
         </button>
       </div>
 
@@ -201,32 +189,30 @@ export default function AdminCarousel() {
       {showForm && (
         <div className="bg-white rounded-xl p-6 shadow-lg mb-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">
-            {editingImage ? 'Karusel rasmini tahrirlash' : 'Yangi karusel rasmi qo\'shish'}
+            {editingCategory ? 'Karusel kategoriyasini tahrirlash' : 'Yangi karusel kategoriyasi qo\'shish'}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Restoran *
+                Kategoriya *
               </label>
               <select
-                value={formData.restaurantId}
-                onChange={(e) => setFormData({ ...formData, restaurantId: e.target.value })}
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 required
-                disabled={!!editingImage}
+                disabled={!!editingCategory}
               >
-                <option value="">Restoranni tanlang</option>
-                {restaurants
-                  .filter((r) => r.isActive)
-                  .map((restaurant) => (
-                    <option key={restaurant.id} value={restaurant.id}>
-                      {restaurant.name}
-                    </option>
-                  ))}
+                <option value="">Kategoriyani tanlang</option>
+                {availableCategories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
               </select>
-              {editingImage && (
+              {editingCategory && (
                 <p className="mt-1 text-xs text-gray-500">
-                  Restoranni o'zgartirib bo'lmaydi
+                  Kategoriyani o'zgartirib bo'lmaydi
                 </p>
               )}
             </div>
@@ -299,19 +285,35 @@ export default function AdminCarousel() {
               </div>
             </div>
 
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tartib raqami
+              </label>
+              <input
+                type="number"
+                value={formData.order}
+                onChange={(e) => setFormData({ ...formData, order: parseInt(e.target.value) || 0 })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                min="0"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Kichik raqamlar avval ko'rinadi
+              </p>
+            </div>
+
             <div className="flex space-x-4">
               <button
                 type="submit"
                 disabled={uploading}
                 className="bg-primary-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {uploading ? 'Yuklanmoqda...' : editingImage ? 'Saqlash' : 'Qo\'shish'}
+                {uploading ? 'Yuklanmoqda...' : editingCategory ? 'Saqlash' : 'Qo\'shish'}
               </button>
               <button
                 type="button"
                 onClick={() => {
                   setShowForm(false);
-                  setEditingImage(null);
+                  setEditingCategory(null);
                   setError('');
                 }}
                 className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
@@ -329,43 +331,50 @@ export default function AdminCarousel() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {carouselImages.length === 0 ? (
+          {carouselCategories.length === 0 ? (
             <div className="col-span-full bg-white rounded-lg shadow-md p-6 text-center">
-              <p className="text-gray-600">Hozircha karusel rasmlari yo'q</p>
+              <p className="text-gray-600">Hozircha karusel kategoriyalari yo'q</p>
               <p className="text-sm text-gray-500 mt-2">
-                Karusel rasmi qo'shish uchun yuqoridagi tugmani bosing
+                Karusel kategoriyasi qo'shish uchun yuqoridagi tugmani bosing
               </p>
             </div>
           ) : (
-            carouselImages.map((image) => (
+            carouselCategories.map((category) => (
               <div
-                key={image.id}
+                key={category.id}
                 className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all"
               >
                 <div className="relative h-48 overflow-hidden">
-                  <img
-                    src={getImageUrl(image.imageUrl)}
-                    alt={image.restaurantName}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
+                  {category.imageUrl ? (
+                    <img
+                      src={getImageUrl(category.imageUrl)}
+                      alt={category.category}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-primary-100 flex items-center justify-center text-4xl">
+                      🍕
+                    </div>
+                  )}
                   <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
                     Karusel
                   </div>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">{image.restaurantName}</h3>
+                  <h3 className="font-semibold text-gray-900 mb-2">{category.category}</h3>
+                  <p className="text-xs text-gray-500 mb-4">Tartib: {category.order}</p>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => handleEdit(image)}
+                      onClick={() => handleEdit(category)}
                       className="flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-700 transition-colors"
                     >
                       Tahrirlash
                     </button>
                     <button
-                      onClick={() => handleDelete(image.restaurantId)}
+                      onClick={() => handleDelete(category.id)}
                       className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-700 transition-colors"
                     >
                       O'chirish
@@ -380,4 +389,3 @@ export default function AdminCarousel() {
     </div>
   );
 }
-

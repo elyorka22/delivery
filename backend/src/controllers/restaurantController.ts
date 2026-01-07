@@ -104,4 +104,51 @@ export async function getMenuItems(req: Request, res: Response): Promise<void> {
   }
 }
 
+export async function getAllCategories(req: Request, res: Response): Promise<void> {
+  try {
+    const { getAllCategories: getAllCategoriesFromFirestore } = await import('../utils/firestore-helpers');
+    const categories = await getAllCategoriesFromFirestore();
+    res.json(categories);
+  } catch (error: any) {
+    console.error('Get all categories error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    });
+  }
+}
+
+export async function getMenuItemsByCategory(req: Request, res: Response): Promise<void> {
+  try {
+    const { category } = req.params;
+    const { getMenuItemsByCategory: getMenuItemsByCategoryFromFirestore, firestoreDocToObject } = await import('../utils/firestore-helpers');
+    
+    const menuItems = await getMenuItemsByCategoryFromFirestore(category);
+    
+    // Get restaurant info for each menu item
+    const menuItemsWithRestaurants = await Promise.all(
+      menuItems.map(async (item) => {
+        const { getRestaurantById } = await import('../utils/firestore-helpers');
+        const restaurant = item.restaurantId ? await getRestaurantById(item.restaurantId) : null;
+        const itemResponse = firestoreDocToObject(item);
+        return {
+          ...itemResponse,
+          restaurant: restaurant ? {
+            id: restaurant.id,
+            name: restaurant.name,
+          } : null,
+        };
+      })
+    );
+
+    res.json(menuItemsWithRestaurants);
+  } catch (error: any) {
+    console.error('Get menu items by category error:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    });
+  }
+}
+
 

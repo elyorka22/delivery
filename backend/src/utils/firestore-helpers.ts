@@ -217,6 +217,83 @@ export async function getMenuItemById(id: string): Promise<FirestoreMenuItem | n
   return { id: doc.id, ...doc.data() } as FirestoreMenuItem;
 }
 
+// Get all unique categories from all restaurants
+export async function getAllCategories(): Promise<string[]> {
+  const snapshot = await getMenuItemsCollection()
+    .where('isAvailable', '==', true)
+    .get();
+  
+  const categories = new Set<string>();
+  snapshot.docs.forEach(doc => {
+    const item = doc.data() as FirestoreMenuItem;
+    if (item.category) {
+      categories.add(item.category);
+    }
+  });
+  
+  return Array.from(categories).sort();
+}
+
+// Get all menu items by category from all restaurants
+export async function getMenuItemsByCategory(category: string): Promise<FirestoreMenuItem[]> {
+  const snapshot = await getMenuItemsCollection()
+    .where('category', '==', category)
+    .where('isAvailable', '==', true)
+    .get();
+  
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreMenuItem));
+}
+
+// Carousel Categories collection helpers
+function getCarouselCategoriesCollection() {
+  return getDb().collection('carouselCategories');
+}
+
+export interface FirestoreCarouselCategory {
+  id: string;
+  category: string;
+  imageUrl: string;
+  order: number;
+  createdAt: FirebaseFirestore.Timestamp;
+  updatedAt: FirebaseFirestore.Timestamp;
+}
+
+export async function getCarouselCategories(): Promise<FirestoreCarouselCategory[]> {
+  const snapshot = await getCarouselCategoriesCollection()
+    .orderBy('order', 'asc')
+    .get();
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FirestoreCarouselCategory));
+}
+
+export async function createCarouselCategory(categoryData: Omit<FirestoreCarouselCategory, 'id' | 'createdAt' | 'updatedAt'>): Promise<FirestoreCarouselCategory> {
+  const now = getCurrentTimestamp();
+  const categoryRef = getCarouselCategoriesCollection().doc();
+  const cleanData = removeUndefined(categoryData);
+  const category: Omit<FirestoreCarouselCategory, 'id'> = {
+    ...cleanData,
+    createdAt: now,
+    updatedAt: now,
+  } as Omit<FirestoreCarouselCategory, 'id'>;
+  await categoryRef.set(category);
+  return { id: categoryRef.id, ...category };
+}
+
+export async function updateCarouselCategory(id: string, updates: Partial<Omit<FirestoreCarouselCategory, 'id' | 'createdAt'>>): Promise<FirestoreCarouselCategory> {
+  const categoryRef = getCarouselCategoriesCollection().doc(id);
+  const cleanUpdates = removeUndefined(updates);
+  const updateData = {
+    ...cleanUpdates,
+    updatedAt: getCurrentTimestamp(),
+  };
+  await categoryRef.update(updateData);
+  const updated = await categoryRef.get();
+  return { id: updated.id, ...updated.data() } as FirestoreCarouselCategory;
+}
+
+export async function deleteCarouselCategory(id: string): Promise<void> {
+  await getCarouselCategoriesCollection().doc(id).delete();
+}
+
 // Orders collection helpers
 function getOrdersCollection() {
   return getDb().collection('orders');
