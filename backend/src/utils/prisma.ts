@@ -13,6 +13,8 @@ const prisma = new PrismaClient({
 // Lazy connection - connect on first query instead of immediately
 // This helps with Railway's network initialization timing
 let connectionTested = false;
+let retryCount = 0;
+const MAX_RETRIES = 3;
 
 async function testConnection() {
   if (connectionTested) return;
@@ -22,15 +24,21 @@ async function testConnection() {
     console.log('✅ Prisma connected to database');
     connectionTested = true;
   } catch (error: any) {
-    console.error('❌ Prisma connection error:', error.message);
-    console.error('DATABASE_URL:', process.env.DATABASE_URL ? 'Set (length: ' + process.env.DATABASE_URL.length + ')' : 'NOT SET');
+    retryCount++;
     
-    // Retry after 5 seconds
-    if (!connectionTested) {
-      console.log('⏳ Retrying connection in 5 seconds...');
-      setTimeout(() => {
-        testConnection();
-      }, 5000);
+    if (retryCount <= MAX_RETRIES) {
+      console.error(`❌ Prisma connection error (attempt ${retryCount}/${MAX_RETRIES}):`, error.message);
+      console.error('DATABASE_URL:', process.env.DATABASE_URL ? 'Set (length: ' + process.env.DATABASE_URL.length + ')' : 'NOT SET');
+      
+      if (retryCount < MAX_RETRIES) {
+        console.log('⏳ Retrying connection in 5 seconds...');
+        setTimeout(() => {
+          testConnection();
+        }, 5000);
+      } else {
+        console.error('❌ Max retries reached. Please check DATABASE_URL and use Connection Pooling URL if available.');
+        console.error('📖 See URGENT_POOLER_URL_FIX.md for instructions');
+      }
     }
   }
 }
