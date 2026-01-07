@@ -122,8 +122,10 @@ export default function HomePage() {
   const fetchRestaurants = async () => {
     try {
       const response = await api.get('/restaurants');
-      if (response.data && response.data.length > 0) {
-        setRestaurants(response.data);
+      // Ensure response.data is an array
+      const data = Array.isArray(response.data) ? response.data : [];
+      if (data.length > 0) {
+        setRestaurants(data);
       } else {
         // Use demo data if no restaurants found
         setRestaurants(demoRestaurants);
@@ -141,7 +143,9 @@ export default function HomePage() {
     setMenuLoading(true);
     try {
       const response = await api.get(`/restaurants/${restaurantId}/menu`);
-      setMenuItems(response.data);
+      // Ensure response.data is an array
+      const data = Array.isArray(response.data) ? response.data : [];
+      setMenuItems(data);
     } catch (error) {
       console.error('Error fetching menu items:', error);
       setMenuItems([]);
@@ -185,17 +189,21 @@ export default function HomePage() {
     }
   };
 
-  const filteredRestaurants = restaurants.filter((restaurant) => {
-    const matchesSearch = restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      restaurant.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch && restaurant.isActive;
-  });
+  const filteredRestaurants = Array.isArray(restaurants) 
+    ? restaurants.filter((restaurant) => {
+        const matchesSearch = restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          restaurant.description?.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesSearch && restaurant.isActive;
+      })
+    : [];
 
-  const filteredMenuItems = menuItems.filter((item) => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch && item.isAvailable;
-  });
+  const filteredMenuItems = Array.isArray(menuItems)
+    ? menuItems.filter((item) => {
+        const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+        return matchesSearch && item.isAvailable;
+      })
+    : [];
 
   return (
     <Layout>

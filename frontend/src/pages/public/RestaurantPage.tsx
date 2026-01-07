@@ -33,18 +33,25 @@ export default function RestaurantPage() {
   const fetchMenuItems = async () => {
     try {
       const response = await api.get(`/restaurants/${id}/menu`);
-      setMenuItems(response.data);
+      // Ensure response.data is an array
+      const data = Array.isArray(response.data) ? response.data : [];
+      setMenuItems(data);
     } catch (error) {
       console.error('Error fetching menu:', error);
+      setMenuItems([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const categories = ['Barchasi', ...Array.from(new Set(menuItems.map((item) => item.category)))];
-  const filteredItems = selectedCategory === 'Barchasi'
-    ? menuItems
-    : menuItems.filter((item) => item.category === selectedCategory);
+  const categories = Array.isArray(menuItems)
+    ? ['Barchasi', ...Array.from(new Set(menuItems.map((item) => item.category)))]
+    : ['Barchasi'];
+  const filteredItems = Array.isArray(menuItems)
+    ? selectedCategory === 'Barchasi'
+      ? menuItems
+      : menuItems.filter((item) => item.category === selectedCategory)
+    : [];
 
   const handleAddToCart = (item: MenuItem) => {
     if (item.isAvailable) {
