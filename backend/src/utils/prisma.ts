@@ -36,8 +36,9 @@ async function testConnection() {
           testConnection();
         }, 5000);
       } else {
-        console.error('❌ Max retries reached. Please check DATABASE_URL and use Connection Pooling URL if available.');
-        console.error('📖 See URGENT_POOLER_URL_FIX.md for instructions');
+        console.error('❌ Max retries reached. Please check DATABASE_URL.');
+        console.error('💡 Try different connection string formats in SUPABASE_CONNECTION_VARIANTS.md');
+        console.error('🔍 Current DATABASE_URL format:', process.env.DATABASE_URL?.substring(0, 50) + '...');
       }
     }
   }
