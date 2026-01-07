@@ -1,22 +1,33 @@
 import { Request, Response } from 'express';
-import prisma from '../utils/prisma';
+import { 
+  getRestaurants as getRestaurantsFromFirestore, 
+  getRestaurantById, 
+  getUserById, 
+  getMenuItemsByRestaurant,
+  firestoreDocToObject 
+} from '../utils/firestore-helpers';
 
 export async function getRestaurants(req: Request, res: Response): Promise<void> {
   try {
-    const restaurants = await prisma.restaurant.findMany({
-      where: { isActive: true },
-      include: {
-        manager: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
+    const restaurants = await getRestaurantsFromFirestore(true);
+    
+    // Get manager info for each restaurant
+    const restaurantsWithManagers = await Promise.all(
+      restaurants.map(async (restaurant) => {
+        const manager = restaurant.managerId ? await getUserById(restaurant.managerId) : null;
+        const restaurantResponse = firestoreDocToObject(restaurant);
+        return {
+          ...restaurantResponse,
+          manager: manager ? {
+            id: manager.id,
+            name: manager.name,
+            email: manager.email,
+          } : null,
+        };
+      })
+    );
 
-    res.json(restaurants);
+    res.json(restaurantsWithManagers);
   } catch (error: any) {
     console.error('Get restaurants error:', error);
     console.error('Error details:', {
@@ -35,28 +46,35 @@ export async function getRestaurant(req: Request, res: Response): Promise<void> 
   try {
     const { id } = req.params;
 
-    const restaurant = await prisma.restaurant.findUnique({
-      where: { id },
-      include: {
-        manager: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
+    const restaurant = await getRestaurantById(id);
 
     if (!restaurant) {
       res.status(404).json({ error: 'Restaurant not found' });
       return;
     }
 
-    res.json(restaurant);
-  } catch (error) {
+    // Get manager info
+    const manager = restaurant.managerId ? await getUserById(restaurant.managerId) : null;
+    const restaurantResponse = firestoreDocToObject(restaurant);
+    
+    res.json({
+      ...restaurantResponse,
+      manager: manager ? {
+        id: manager.id,
+        name: manager.name,
+        email: manager.email,
+      } : null,
+    });
+  } catch (error: any) {
     console.error('Get restaurant error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error details:', {
+      message: error?.message,
+      code: error?.code,
+    });
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    });
   }
 }
 
@@ -64,19 +82,25 @@ export async function getMenuItems(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
 
-    const menuItems = await prisma.menuItem.findMany({
-      where: {
-        restaurantId: id,
-      },
-      orderBy: {
-        category: 'asc',
-      },
-    });
+    const menuItems = await getMenuItemsByRestaurant(id);
+    
+    // Sort by category
+    menuItems.sort((a, b) => a.category.localeCompare(b.category));
+    
+    // Convert to API response format
+    const menuItemsResponse = menuItems.map(item => firestoreDocToObject(item));
 
-    res.json(menuItems);
-  } catch (error) {
+    res.json(menuItemsResponse);
+  } catch (error: any) {
     console.error('Get menu items error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error details:', {
+      message: error?.message,
+      code: error?.code,
+    });
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: process.env.NODE_ENV === 'development' ? error?.message : undefined
+    });
   }
 }
 

@@ -102,8 +102,18 @@ function initializeFirebase() {
       process.env.FIREBASE_CLIENT_EMAIL &&
       process.env.FIREBASE_PRIVATE_KEY
     ) {
-      // Validate private key length
-      const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
+      // Validate and fix private key
+      let privateKey = process.env.FIREBASE_PRIVATE_KEY;
+      
+      // Replace escaped newlines - handle both \\n and \n
+      privateKey = privateKey.replace(/\\n/g, '\n');
+      privateKey = privateKey.replace(/\\\\n/g, '\n');
+      
+      // Remove any extra escaping
+      if (privateKey.includes('\\n')) {
+        privateKey = privateKey.replace(/\\n/g, '\n');
+      }
+      
       if (privateKey.length < 500) {
         console.error('❌ FIREBASE_PRIVATE_KEY is too short:', privateKey.length, 'characters (expected 1600+)');
         console.error('💡 Make sure you copied the ENTIRE private_key from the JSON file');
@@ -118,7 +128,15 @@ function initializeFirebase() {
         throw new Error('FIREBASE_PRIVATE_KEY is missing "-----END PRIVATE KEY-----"');
       }
       
+      // Ensure proper format - should have actual newlines, not \n strings
+      if (!privateKey.includes('\n')) {
+        console.warn('⚠️ Private key does not contain newlines. This might cause issues.');
+      }
+      
       console.log('ℹ️ Using individual Firebase environment variables');
+      console.log('ℹ️ Private key length:', privateKey.length, 'characters');
+      console.log('ℹ️ Private key has', (privateKey.match(/\n/g) || []).length, 'newlines');
+      
       firebaseAppInstance = admin.initializeApp({
         credential: admin.credential.cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
